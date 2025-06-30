@@ -3,6 +3,12 @@
 ## Overview
 EduRAG is an AI-powered tutoring system that uses Retrieval-Augmented Generation (RAG), LLM APIs, and PostgreSQL to deliver smart, context-aware educational responses.
 
+## Features
+- Retrieval-Augmented Generation (RAG) for accurate and contextual answers
+- LangChain integration for dynamic LLM workflows
+- PostgreSQL vector store for fast and relevant retrieval
+- FastAPI backend for easy API interaction
+
 ## Setup Instructions
 
 1. Clone the repo:
