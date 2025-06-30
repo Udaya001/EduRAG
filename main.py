@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router as api_router
 from app.db.models import ContentModel
 from app.db.database import engine
@@ -11,6 +12,15 @@ app = FastAPI(
     title="EduRAG: Intelligent Tutor",
     description="AI-powered tutoring system using RAG, LangChain, and Gemini API.",
     version="1.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (for development only)
+    allow_credentials=True,
+    allow_methods=["*"],   # Allow all methods including POST, GET, OPTIONS
+    allow_headers=["*"],  # Allow all headers
 )
 
 # Ensure tables exist
