@@ -1,5 +1,3 @@
-# app/api/v1/router.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.services.content_service import ContentService
 from app.core.services.tutor_service import TutorService

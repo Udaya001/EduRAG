@@ -1,5 +1,3 @@
-# app/core/services/content_service.py
-
 from app.db.models import ContentModel
 from app.db.database import SessionLocal
 from app.core.rag.vector_store import get_vectorstore, save_vectorstore
@@ -15,10 +13,8 @@ logger = get_logger(__name__)
 
 
 def add_to_vectorstore(texts):
-    """
-    Adds text chunks to the vector store.
-    If a store exists, updates it. Otherwise, creates a new one.
-    """
+   # If a store exists, updates it. else, creates a new one.
+
     logger.info("Adding texts to vector store")
     embeddings = GoogleGenerativeAIEmbeddings(
     model="models/embedding-001",
@@ -40,10 +36,9 @@ class ContentService:
         self.db = SessionLocal()
 
     def upload_content(self, request):
-        """
-        Uploads content and metadata to the database and vector store.
-        Returns success message and content ID.
-        """
+        #Uploads content and metadata to the database and vector store.
+        #Returns success message and content ID.
+
         logger.info(f"Uploading content for topic: {request.metadata.get('topic')}")
         try:
             content = ContentModel(
@@ -72,10 +67,9 @@ class ContentService:
             self.db.close()
 
     def get_filtered_topics(self, grade: str = None, topic: str = None):
-        """
-        Fetches topics filtered by grade or topic name.
-        Returns list of dictionaries containing topic info.
-        """
+        #Fetches topics filtered by grade or topic name.
+        #Returns list of dictionaries containing topic info.
+
         logger.info(f"Fetching topics (grade={grade}, topic={topic})")
         try:
             query = self.db.query(ContentModel)
@@ -95,9 +89,8 @@ class ContentService:
             self.db.close()
 
     def get_system_metrics(self):
-        """
-        Returns system metrics like total topics, files uploaded, and vector store size.
-        """
+        #Returns system metrics like total topics, files uploaded, and vector store size.
+
         logger.info("Fetching system metrics")
         try:
             total_topics = self.db.query(ContentModel.topic).distinct().count()
