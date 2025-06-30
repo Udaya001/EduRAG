@@ -2,14 +2,10 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from app.core.rag.llm import get_llm
 from app.core.rag.vector_store import get_vectorstore
-from app.utils.logger import get_logger
 
-logger = get_logger(__name__)
-
-# Define a customizable system prompt for the tutor persona
-DEFAULT_SYSTEM_PROMPT = """
-You are an intelligent educational tutor. Use the following pieces of context to answer the question at the end.
-If you don't know the answer, just say that you don't know, don't try to make up an answer.
+DEFAULT_PROMPT = """
+You are an educational tutor. Use the following context to answer the question.
+If you don't know the answer, just say so.
 
 Context:
 {context}
@@ -20,25 +16,10 @@ Question:
 Answer:
 """
 
-def get_rag_chain(persona: str = "default"):
-    """
-    Builds and returns a RetrievalQA chain using the configured LLM and vector store.
-    Optionally applies different personas/system prompts.
-    """
-    vectorstore = get_vectorstore()
-    if not vectorstore:
-        logger.error("Vector store not found. Please upload content first.")
-        raise ValueError("Vector store not initialized")
+PERSONA_PROMPTS = {
+    "friendly": """
+You're a friendly tutor who explains things clearly and encourages students.
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
-
-    # Customize system prompt based on persona
-    system_prompt = {
-        "default": DEFAULT_SYSTEM_PROMPT,
-        "friendly": """
-You're a friendly educational tutor! Help students understand concepts clearly.
-Use simple language and be encouraging.
-        
 Context:
 {context}
 
@@ -47,9 +28,8 @@ Question:
 
 Friendly Answer:
 """,
-        "strict": """
-You're a strict educational tutor. Only provide factual and precise answers based on the context.
-Do not add opinions or extra information.
+    "strict": """
+You're a strict tutor. Only use information from the context. Be factual.
 
 Context:
 {context}
@@ -59,8 +39,8 @@ Question:
 
 Strict Answer:
 """,
-        "humorous": """
-You're a humorous tutor. Explain things with a light-hearted tone, but stay accurate.
+    "humorous": """
+You're a humorous tutor. Make learning fun while staying accurate.
 
 Context:
 {context}
@@ -70,27 +50,25 @@ Question:
 
 Humorous Answer:
 """
-    }.get(persona.lower(), DEFAULT_SYSTEM_PROMPT)
+}
 
-    QA_CHAIN_PROMPT = PromptTemplate.from_template(system_prompt)
+def get_rag_chain(persona="default"):
+    vectorstore = get_vectorstore()
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
-    qa_chain = RetrievalQA.from_chain_type(
+    prompt_template = PERSONA_PROMPTS.get(persona.lower(), DEFAULT_PROMPT)
+    prompt = PromptTemplate.from_template(prompt_template)
+
+    chain = RetrievalQA.from_chain_type(
         llm=get_llm(),
         chain_type="stuff",
         retriever=retriever,
-        return_source_documents=True,
-        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+        chain_type_kwargs={"prompt": prompt},
+        return_source_documents=True
     )
-    logger.info(f"RAG chain initialized with {persona} persona")
-    return qa_chain
+    return chain
 
-
-def generate_answer(question: str, persona: str = "default") -> str:
-    """
-    Takes a question and optional persona, retrieves context, and generates an answer.
-    Returns only the final answer string.
-    """
-    qa_chain = get_rag_chain(persona)
-    result = qa_chain({"query": question})
-    logger.debug("Generated answer for question '{}': {}", question, result["result"])
+def generate_answer(question: str, persona="default"):
+    chain = get_rag_chain(persona)
+    result = chain.invoke({"query": question})
     return result["result"]

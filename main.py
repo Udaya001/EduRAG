@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from app.api.v1.router import router as api_router
+from app.db.models import ContentModel
+from app.db.database import engine
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -10,6 +12,9 @@ app = FastAPI(
     description="AI-powered tutoring system using RAG, LangChain, and Gemini API.",
     version="1.0"
 )
+
+# Ensure tables exist
+ContentModel.metadata.create_all(bind=engine)
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
