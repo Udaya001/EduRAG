@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduRAG Playground</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 {
+      color: #007BFF;
+    }
+    .section {
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      margin-bottom: 2em;
+    }
+    label {
+      display: block;
+      margin-top: 0.5em;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5em;
+      margin-top: 0.2em;
+      font-family: monospace;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    pre {
+      background: #f1f1f1;
+      padding: 1em;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    .success-message {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #28a745;
+      color: white;
+      padding: 1em 1.5em;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: fadein 0.5s ease-out forwards,
+                 fadeout 0.5s ease-in forwards;
+      opacity: 0;
+      animation-delay: 0s, 3s;
+      z-index: 1000;
+    }
+
+    @keyframes fadein {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeout {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>EduRAG: Intelligent Tutor Playground</h1>
+
+  <!-- Upload Content -->
+  <div class="section">
+    <h2>Upload Textbook Content</h2>
+    <label>Topic:</label>
+    <input type="text" id="topic" placeholder="e.g., Science">
+
+    <label>Title:</label>
+    <input type="text" id="title" placeholder="e.g., Photosynthesis Basics">
+
+    <label>Grade:</label>
+    <select id="grade">
+      <option value="">-- Select Grade --</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+    </select>
+
+    <label>Content:</label>
+    <textarea id="content" rows="6" placeholder="Paste textbook content here..."></textarea>
+
+    <button onclick="uploadContent()">Upload</button>
+    <pre id="upload-result"></pre>
+  </div>
+
+  <!-- Ask Question -->
+  <div class="section">
+    <h2> Ask the Tutor</h2>
+    <label>Question:</label>
+    <input type="text" id="question" placeholder="e.g., What is photosynthesis?">
+
+    <label>Persona:</label>
+    <select id="persona">
+      <option value="default">Default</option>
+      <option value="friendly">Friendly</option>
+      <option value="strict">Strict</option>
+      <option value="humorous">Humorous</option>
+    </select>
+
+    <button onclick="askQuestion()">Get Answer</button>
+    <pre id="answer-result"></pre>
+  </div>
+
+  <!-- Topics by Grade -->
+  <div class="section">
+    <h2>Filter Topics by Grade</h2>
+    <label>Select Grade:</label>
+    <select id="filter-grade">
+      <option value="">All Grades</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+    </select>
+
+    <button onclick="getTopics()">Get Topics</button>
+    <pre id="topics-result"></pre>
+  </div>
+
+  <!-- Metrics -->
+  <div class="section">
+    <h2>System Metrics</h2>
+    <button onclick="getMetrics()">Load Metrics</button>
+    <pre id="metrics-result"></pre>
+  </div>
+
+  <!-- Feedback -->
+  <div class="section">
+    <h2>Submit Feedback on an Answer</h2>
+    <label>Question:</label>
+    <input type="text" id="feedback-question" placeholder="Enter question you asked">
+
+    <label>Answer:</label>
+    <input type="text" id="feedback-answer" placeholder="Copy/paste the answer you received">
+
+    <label>Rating (1–5):</label>
+    <input type="number" id="feedback-rating" min="1" max="5">
+
+    <label>Comment (optional):</label>
+    <input type="text" id="feedback-comment">
+
+    <button onclick="submitFeedback()">Submit Feedback</button>
+    <pre id="feedback-result"></pre>
+  </div>
+
+  <!-- Logs -->
+  <div class="section">
+    <h2>View Logged Questions & Answers</h2>
+    <button onclick="viewLogs()">View All Logs</button>
+    <pre id="logs-result"></pre>
+  </div>
+
+  <!-- Success Toast Message -->
+  <div id="success-toast" class="success-message" style="display:none;">
+    Content uploaded successfully!
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.5:8000/api/v1";
+
+    async function showToast(message) {
+      const toast = document.getElementById("success-toast");
+      toast.textContent = message;
+      toast.style.display = "block";
+      await new Promise(r => setTimeout(r, 3000));
+      toast.style.opacity = 0;
+      await new Promise(r => setTimeout(r, 500));
+      toast.style.display = "none";
+      toast.style.opacity = 1;
+    }
+
+    async function uploadContent() {
+      const payload = {
+        content: document.getElementById("content").value,
+        metadata: {
+          topic: document.getElementById("topic").value,
+          title: document.getElementById("title").value,
+          grade: document.getElementById("grade").value
+        }
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/upload-content`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        document.getElementById("upload-result").textContent = JSON.stringify(data, null, 2);
+        if (data.message && data.content_id) {
+          showToast("Content uploaded successfully!");
+        }
+      } catch (err) {
+        document.getElementById("upload-result").textContent = JSON.stringify({ error: err.message }, null, 2);
+      }
+    }
+
+    async function askQuestion() {
+      const question = document.getElementById("question").value;
+      const persona = document.getElementById("persona").value;
+
+      const res = await fetch(`${API_BASE}/ask?persona=${persona}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+
+      const data = await res.json();
+      document.getElementById("answer-result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function getTopics() {
+      const grade = document.getElementById("filter-grade").value;
+      const url = grade ? `${API_BASE}/topics?grade=${grade}` : `${API_BASE}/topics`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      document.getElementById("topics-result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function getMetrics() {
+      const res = await fetch(`${API_BASE}/metrics`);
+      const data = await res.json();
+      document.getElementById("metrics-result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function submitFeedback() {
+      const question = document.getElementById("feedback-question").value;
+      const answer = document.getElementById("feedback-answer").value;
+      const rating = document.getElementById("feedback-rating").value;
+      const comment = document.getElementById("feedback-comment").value;
+
+      const res = await fetch(`${API_BASE}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, answer, rating, comment })
+      });
+
+      const data = await res.json();
+      document.getElementById("feedback-result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function viewLogs() {
+      const res = await fetch(`${API_BASE}/logs`);
+      const data = await res.json();
+      document.getElementById("logs-result").textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+
+</body>
+</html>
