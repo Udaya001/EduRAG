@@ -1,56 +1,10 @@
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
-from app.core.rag.llm import get_llm
-from app.core.rag.vector_store import get_vectorstore
+from .llm import get_llm
+from .vector_store import get_vectorstore
+from .prompts import DEFAULT_PROMPT ,PERSONA_PROMPTS
 
-DEFAULT_PROMPT = """
-You are an educational tutor. Use the following context to answer the question.
-If you don't know the answer, just say so.
 
-Context:
-{context}
-
-Question:
-{question}
-
-Answer:
-"""
-
-PERSONA_PROMPTS = {
-    "friendly": """
-You're a friendly tutor who explains things clearly and encourages students.
-
-Context:
-{context}
-
-Question:
-{question}
-
-Friendly Answer:
-""",
-    "strict": """
-You're a strict tutor. Only use information from the context. Be factual.
-
-Context:
-{context}
-
-Question:
-{question}
-
-Strict Answer:
-""",
-    "humorous": """
-You're a humorous tutor. Make learning fun while staying accurate.
-
-Context:
-{context}
-
-Question:
-{question}
-
-Humorous Answer:
-"""
-}
 
 def get_rag_chain(persona="default"):
     vectorstore = get_vectorstore()
