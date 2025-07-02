@@ -23,4 +23,4 @@ EduRAG is an AI-powered tutoring system that uses Retrieval-Augmented Generation
    cp .env.example .env
 6. Run the server:
    ```bash
-   uvicorn app.utils.main:app --reload
+   uvicorn main:app --reload
