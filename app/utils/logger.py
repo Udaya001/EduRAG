@@ -23,11 +23,6 @@ logger.add(
 )
 
 def get_logger(name: str = None):
-    """
-    Get a named logger instance.
-    :param name: Optional name for the logger context/module.
-    :return: Configured logger instance.
-    """
     if name:
         return logger.bind(name=name)
     return logger
