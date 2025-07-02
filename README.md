@@ -13,7 +13,7 @@ EduRAG is an AI-powered tutoring system that uses Retrieval-Augmented Generation
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/Udaya001/edurag.git 
+   git clone https://github.com/Udaya001/EduRag.git 
    cd edurag
 2. Install dependencies
    ```bash
